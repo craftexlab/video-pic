@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixStock - Free Stock Photos & Videos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            500: '#3B82F6',
+                            600: '#2563EB',
+                        },
+                        dark: {
+                            800: '#1E293B',
+                            900: '#0F172A',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+        }
+        .media-card {
+            transition: all 0.3s ease;
+        }
+        .media-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .image-overlay {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .media-card:hover .image-overlay {
+            opacity: 1;
+        }
+        /* Updated tab styles */
+        .tab-active {
+            border-bottom-color: white !important;
+            color: white !important;
+        }
+        .tab-inactive {
+            color: rgba(255,255,255,0.7) !important;
+            border-bottom-color: transparent !important;
+        }
+        .tab-inactive:hover {
+            color: white !important;
+            border-bottom-color: rgba(255,255,255,0.3) !important;
+        }
+        /* Updated tag styles */
+        .media-tag {
+            background-color: rgba(255,255,255,0.2) !important;
+            color: white !important;
+        }
+        
+        /* Modern Loading Animation */
+        .loader-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .pulse-loader {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        
+        .pulse-loader div {
+            position: absolute;
+            border: 4px solid #3B82F6;
+            opacity: 1;
+            border-radius: 50%;
+            animation: pulse 1.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+        }
+        
+        .pulse-loader div:nth-child(2) {
+            animation-delay: -0.5s;
+        }
+        
+        @keyframes pulse {
+            0% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 0;
+            }
+            4.9% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 0;
+            }
+            5% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                top: 0px;
+                left: 0px;
+                width: 72px;
+                height: 72px;
+                opacity: 0;
+            }
+        }
+        
+        .progress-loader {
+            width: 150px;
+            background: rgba(236, 236, 238, 0.2);
+            height: 3px;
+            border-radius: 7px;
+        }
+        
+        .progress {
+            content: '';
+            width: 0;
+            height: 3px;
+            border-radius: 7px;
+            background: #3B82F6;
+            transition: width 0.5s ease;
+            animation: progress 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes progress {
+            0% { width: 0; }
+            50% { width: 100%; }
+            100% { width: 0; }
+        }
+        
+        .loading-text {
+            color: #3B82F6;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            animation: text-pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes text-pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        /* Skeleton Loading for Cards */
+        .skeleton-card {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 12px;
+        }
+        
+        .dark .skeleton-card {
+            background: linear-gradient(90deg, #2d3748 25%, #4a5568 50%, #2d3748 75%);
+            background-size: 200% 100%;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark-900 transition-colors duration-300">
+    <!-- Navbar -->
+    <nav class="bg-white dark:bg-dark-800 shadow-sm py-4 px-6 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-camera-retro text-primary-500 text-2xl"></i>
+                <span class="text-xl font-bold text-gray-800 dark:text-white">PixStock</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-700">
+                    <i class="fas fa-moon text-gray-600 dark:text-yellow-300 hidden dark:block"></i>
+                    <i class="fas fa-sun text-gray-600 dark:text-gray-300 block dark:hidden"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient py-20 px-6 text-white">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6">Discover Free Stock Photos & Videos</h1>
+            <p class="text-xl mb-8 opacity-90">High quality images, videos and music shared by our talented community.</p>
+            
+            <div class="relative max-w-2xl mx-auto">
+                <input type="text" id="search-input" placeholder="Search for free photos and videos..." 
+                    class="w-full py-4 px-6 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-lg">
+                <button id="search-btn" class="absolute right-2 top-2 bg-primary-500 hover:bg-primary-600 text-white py-2 px-6 rounded-full transition">
+                    Search
+                </button>
+            </div>
+            
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+                <span class="popular-tag media-tag text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-opacity-30">Nature</span>
+                <span class="popular-tag media-tag text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-opacity-30">Technology</span>
+                <span class="popular-tag media-tag text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-opacity-30">People</span>
+                <span class="popular-tag media-tag text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-opacity-30">Animals</span>
+                <span class="popular-tag media-tag text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-opacity-30">Travel</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-12 px-6">
+        <!-- Filters -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <select id="category-filter" class="appearance-none bg-white dark:bg-dark-800 border border-gray-300 dark:border-gray-600 rounded-lg py-2 pl-4 pr-8 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="">All Categories</option>
+                        <option value="nature">Nature</option>
+                        <option value="technology">Technology</option>
+                        <option value="people">People</option>
+                        <option value="animals">Animals</option>
+                        <option value="travel">Travel</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                </div>
+                <div class="relative">
+                    <select id="sort-filter" class="appearance-none bg-white dark:bg-dark-800 border border-gray-300 dark:border-gray-600 rounded-lg py-2 pl-4 pr-8 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="popular">Popular</option>
+                        <option value="latest">Latest</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                </div>
+            </div>
+            <div class="text-gray-600 dark:text-gray-400">
+                <span id="result-count">0</span> results found
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-8">
+            <ul class="flex flex-wrap -mb-px" id="media-tabs">
+                <li class="mr-2">
+                    <button class="inline-block py-4 px-4 text-sm font-medium text-center border-b-2 tab-active" id="images-tab">
+                        <i class="fas fa-image mr-2"></i>Photos
+                    </button>
+                </li>
+                <li class="mr-2">
+                    <button class="inline-block py-4 px-4 text-sm font-medium text-center border-b-2 tab-inactive" id="videos-tab">
+                        <i class="fas fa-video mr-2"></i>Videos
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Loading Animation -->
+        <div id="loading-spinner" class="hidden">
+            <div class="loader-container py-12">
+                <div class="pulse-loader">
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="progress-loader">
+                    <div class="progress"></div>
+                </div>
+                <p class="loading-text">Loading amazing content...</p>
+            </div>
+            
+            <!-- Skeleton Loading for Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                ${Array(8).fill(`
+                <div class="skeleton-card">
+                    <div class="aspect-square rounded-t-xl"></div>
+                    <div class="p-4 space-y-2">
+                        <div class="h-4 w-3/4 rounded skeleton-card"></div>
+                        <div class="flex gap-2">
+                            <div class="h-6 w-16 rounded skeleton-card"></div>
+                            <div class="h-6 w-16 rounded skeleton-card"></div>
+                        </div>
+                        <div class="h-4 w-1/2 rounded skeleton-card"></div>
+                    </div>
+                </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <!-- Images Grid -->
+        <div id="images-content" class="tab-content active">
+            <div id="images-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Images will be dynamically loaded here -->
+            </div>
+
+            <!-- Load More Button -->
+            <div class="mt-12 text-center">
+                <button id="load-more-images" class="bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-8 rounded-full shadow-lg transition hidden">
+                    Load More Images
+                </button>
+            </div>
+        </div>
+
+        <!-- Videos Grid (Hidden by default) -->
+        <div id="videos-content" class="tab-content hidden">
+            <div id="videos-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Videos will be dynamically loaded here -->
+            </div>
+
+            <!-- Load More Button -->
+            <div class="mt-12 text-center">
+                <button id="load-more-videos" class="bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-8 rounded-full shadow-lg transition hidden">
+                    Load More Videos
+                </button>
+            </div>
+        </div>
+
+        <!-- No Results Message -->
+        <div id="no-results" class="text-center py-12 hidden">
+            <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-medium text-gray-700 dark:text-gray-300">No results found</h3>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Try a different search term or category</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-dark-800 py-8 px-6 border-t border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-camera-retro text-primary-500 text-xl"></i>
+                        <span class="text-lg font-bold text-gray-800 dark:text-white">PixStock</span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                        Powered by <a href="https://pixabay.com/" class="text-primary-500 hover:underline">Pixabay API</a>
+                    </p>
+                </div>
+                
+                <div class="flex space-x-6 mb-4 md:mb-0">
+                    <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                </div>
+                
+                <div class="flex flex-col">
+                    <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 transition mb-2">About</a>
+                    <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 transition mb-2">Contact</a>
+                    <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 transition">Privacy Policy</a>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+                © 2023 PixStock. All media is free to use under the Pixabay License.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Lightbox Modal (Hidden by default) -->
+    <div id="lightbox" class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center hidden">
+        <div class="relative max-w-5xl w-full mx-4">
+            <button id="close-lightbox" class="absolute -top-12 right-0 text-white text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="lightbox-image" src="" alt="" class="max-h-[80vh] w-auto mx-auto">
+            <div class="mt-4 text-white text-center">
+                <h3 id="lightbox-title" class="text-xl font-bold mb-2"></h3>
+                <div class="flex justify-center space-x-4">
+                    <a id="lightbox-download" href="#" target="_blank" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-download mr-2"></i> Download
+                    </a>
+                    <a id="lightbox-pixabay" href="#" target="_blank" class="bg-white hover:bg-gray-100 text-gray-800 px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-external-link-alt mr-2"></i> View on Pixabay
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_KEY = '51471300-2ad8b624854fb7f0cd69c0efb';
+        let currentPage = 1;
+        let currentSearchTerm = '';
+        let currentCategory = '';
+        let currentSort = 'popular';
+        let currentMediaType = 'images'; // 'images' or 'videos'
+        let totalHits = 0;
+        let totalPages = 1;
+
+        // DOM Elements
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const categoryFilter = document.getElementById('category-filter');
+        const sortFilter = document.getElementById('sort-filter');
+        const resultCount = document.getElementById('result-count');
+        const imagesGrid = document.getElementById('images-grid');
+        const videosGrid = document.getElementById('videos-grid');
+        const loadMoreImagesBtn = document.getElementById('load-more-images');
+        const loadMoreVideosBtn = document.getElementById('load-more-videos');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const noResults = document.getElementById('no-results');
+        const popularTags = document.querySelectorAll('.popular-tag');
+
+        // Dark/Light mode toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        // Check for saved theme preference
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        // Tab switching
+        const tabs = document.querySelectorAll('#media-tabs button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => {
+                    t.classList.remove('tab-active');
+                    t.classList.add('tab-inactive');
+                });
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                    content.classList.remove('active');
+                });
+
+                // Add active class to clicked tab
+                tab.classList.remove('tab-inactive');
+                tab.classList.add('tab-active');
+
+                // Show corresponding content
+                const target = tab.id.replace('-tab', '-content');
+                document.getElementById(target).classList.remove('hidden');
+                document.getElementById(target).classList.add('active');
+
+                // Update current media type
+                currentMediaType = target.includes('images') ? 'images' : 'videos';
+                
+                // If we have a search term, perform search with current filters
+                if (currentSearchTerm) {
+                    currentPage = 1;
+                    if (currentMediaType === 'images') {
+                        imagesGrid.innerHTML = '';
+                    } else {
+                        videosGrid.innerHTML = '';
+                    }
+                    fetchMedia();
+                }
+            });
+        });
+
+        // Search functionality
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Popular tag clicks
+        popularTags.forEach(tag => {
+            tag.addEventListener('click', () => {
+                searchInput.value = tag.textContent;
+                performSearch();
+            });
+        });
+
+        // Filter changes
+        categoryFilter.addEventListener('change', () => {
+            currentCategory = categoryFilter.value;
+            if (currentSearchTerm) {
+                currentPage = 1;
+                if (currentMediaType === 'images') {
+                    imagesGrid.innerHTML = '';
+                } else {
+                    videosGrid.innerHTML = '';
+                }
+                fetchMedia();
+            }
+        });
+
+        sortFilter.addEventListener('change', () => {
+            currentSort = sortFilter.value;
+            if (currentSearchTerm) {
+                currentPage = 1;
+                if (currentMediaType === 'images') {
+                    imagesGrid.innerHTML = '';
+                } else {
+                    videosGrid.innerHTML = '';
+                }
+                fetchMedia();
+            }
+        });
+
+        // Load more buttons
+        loadMoreImagesBtn.addEventListener('click', loadMoreMedia);
+        loadMoreVideosBtn.addEventListener('click', loadMoreMedia);
+
+        // Perform search
+        function performSearch() {
+            currentSearchTerm = searchInput.value.trim();
+            currentPage = 1;
+            
+            if (!currentSearchTerm) {
+                // Show empty state if no search term
+                imagesGrid.innerHTML = '';
+                videosGrid.innerHTML = '';
+                noResults.classList.remove('hidden');
+                loadMoreImagesBtn.classList.add('hidden');
+                loadMoreVideosBtn.classList.add('hidden');
+                resultCount.textContent = '0';
+                return;
+            }
+
+            loadingSpinner.classList.remove('hidden');
+            noResults.classList.add('hidden');
+            
+            if (currentMediaType === 'images') {
+                imagesGrid.innerHTML = '';
+                loadMoreImagesBtn.classList.add('hidden');
+            } else {
+                videosGrid.innerHTML = '';
+                loadMoreVideosBtn.classList.add('hidden');
+            }
+
+            fetchMedia();
+        }
+
+        // Fetch media from Pixabay API
+        async function fetchMedia() {
+            const baseUrl = currentMediaType === 'images' 
+                ? 'https://pixabay.com/api/'
+                : 'https://pixabay.com/api/videos/';
+            
+            let url = `${baseUrl}?key=${API_KEY}&q=${encodeURIComponent(currentSearchTerm)}&page=${currentPage}`;
+            
+            if (currentCategory) {
+                url += `&category=${currentCategory}`;
+            }
+            
+            if (currentSort === 'latest') {
+                url += '&order=latest';
+            } else {
+                url += '&order=popular';
+            }
+            
+            if (currentMediaType === 'images') {
+                url += '&per_page=20&image_type=photo&pretty=true';
+            } else {
+                url += '&per_page=16&pretty=true';
+            }
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                loadingSpinner.classList.add('hidden');
+                
+                if (!data.hits || data.hits.length === 0) {
+                    noResults.classList.remove('hidden');
+                    resultCount.textContent = '0';
+                    return;
+                }
+                
+                totalHits = data.totalHits || 0;
+                const perPage = currentMediaType === 'images' ? 20 : 16;
+                totalPages = Math.ceil(totalHits / perPage);
+                resultCount.textContent = totalHits.toLocaleString();
+                
+                if (currentMediaType === 'images') {
+                    displayImages(data.hits);
+                    if (currentPage < totalPages) {
+                        loadMoreImagesBtn.classList.remove('hidden');
+                    }
+                } else {
+                    displayVideos(data.hits);
+                    if (currentPage < totalPages) {
+                        loadMoreVideosBtn.classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching media:', error);
+                loadingSpinner.classList.add('hidden');
+                noResults.classList.remove('hidden');
+            }
+        }
+
+        // Display images in the grid
+        function displayImages(images) {
+            images.forEach(image => {
+                const imageCard = document.createElement('div');
+                imageCard.className = 'media-card bg-white dark:bg-dark-800 rounded-xl overflow-hidden shadow-md relative';
+                imageCard.innerHTML = `
+                    <div class="relative overflow-hidden aspect-square">
+                        <img src="${image.webformatURL}" 
+                             alt="${image.tags}" 
+                             class="w-full h-full object-cover"
+                             data-large="${image.largeImageURL}"
+                             data-id="${image.id}">
+                        <div class="image-overlay absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                            <button class="preview-btn bg-white text-primary-500 hover:bg-primary-500 hover:text-white rounded-full p-3 mx-1 transition">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                            <a href="${image.largeImageURL}" download target="_blank" class="bg-white text-primary-500 hover:bg-primary-500 hover:text-white rounded-full p-3 mx-1 transition">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-medium text-gray-800 dark:text-white mb-1 truncate">${formatTitle(image.tags)}</h3>
+                        <div class="flex flex-wrap gap-1 mb-2">
+                            ${image.tags.split(',').slice(0, 3).map(tag => `
+                                <span class="media-tag text-xs px-2 py-1 rounded">${tag.trim()}</span>
+                            `).join('')}
+                        </div>
+                        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-download mr-1"></i>
+                            <span>${image.downloads.toLocaleString()} downloads</span>
+                        </div>
+                    </div>
+                `;
+                imagesGrid.appendChild(imageCard);
+
+                // Add event listener to preview button
+                const previewBtn = imageCard.querySelector('.preview-btn');
+                previewBtn.addEventListener('click', () => {
+                    const img = imageCard.querySelector('img');
+                    const title = imageCard.querySelector('h3').textContent;
+                    const id = img.dataset.id;
+                    
+                    document.getElementById('lightbox-image').src = img.dataset.large;
+                    document.getElementById('lightbox-title').textContent = title;
+                    document.getElementById('lightbox-download').href = img.dataset.large;
+                    document.getElementById('lightbox-pixabay').href = `https://pixabay.com/photos/${id}/`;
+                    document.getElementById('lightbox').classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                });
+            });
+        }
+
+        // Display videos in the grid
+        function displayVideos(videos) {
+            videos.forEach(video => {
+                const thumbnailUrl = video.userImageURL || `https://i.vimeocdn.com/video/${video.picture_id}_640x360.jpg`;
+                const videoUrl = video.videos?.medium?.url || `https://pixabay.com/videos/${video.id}/`;
+                
+                const videoCard = document.createElement('div');
+                videoCard.className = 'media-card bg-white dark:bg-dark-800 rounded-xl overflow-hidden shadow-md';
+                videoCard.innerHTML = `
+                    <div class="relative overflow-hidden aspect-video">
+                        <img src="${thumbnailUrl}" 
+                             alt="${video.tags}" 
+                             class="w-full h-full object-cover">
+                        <button class="play-btn absolute inset-0 flex items-center justify-center">
+                            <i class="fas fa-play text-white text-4xl bg-black bg-opacity-50 rounded-full p-4"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-medium text-gray-800 dark:text-white mb-1 truncate">${formatTitle(video.tags)}</h3>
+                        <div class="flex flex-wrap gap-1 mb-2">
+                            ${video.tags.split(',').slice(0, 3).map(tag => `
+                                <span class="media-tag text-xs px-2 py-1 rounded">${tag.trim()}</span>
+                            `).join('')}
+                        </div>
+                        <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                            <div>
+                                <i class="fas fa-download mr-1"></i>
+                                <span>${video.views ? video.views.toLocaleString() : '0'} views</span>
+                            </div>
+                            <a href="${videoUrl}" download target="_blank" class="text-primary-500 hover:text-primary-600">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                `;
+                videosGrid.appendChild(videoCard);
+
+                // Add event listener to play button
+                const playBtn = videoCard.querySelector('.play-btn');
+                playBtn.addEventListener('click', () => {
+                    window.open(videoUrl, '_blank');
+                });
+            });
+        }
+
+        // Load more media
+        function loadMoreMedia() {
+            currentPage++;
+            fetchMedia();
+            
+            // Scroll to bottom of the grid after a short delay to allow DOM update
+            setTimeout(() => {
+                const grid = currentMediaType === 'images' ? imagesGrid : videosGrid;
+                grid.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 100);
+            
+            // Hide load more button if we've reached the last page
+            if (currentPage >= totalPages) {
+                if (currentMediaType === 'images') {
+                    loadMoreImagesBtn.classList.add('hidden');
+                } else {
+                    loadMoreVideosBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        // Format title from tags
+        function formatTitle(tags) {
+            if (!tags) return 'Untitled';
+            return tags.split(',')[0].trim().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        // Lightbox functionality
+        const lightbox = document.getElementById('lightbox');
+        const closeLightbox = document.getElementById('close-lightbox');
+
+        closeLightbox.addEventListener('click', () => {
+            lightbox.classList.add('hidden');
+            document.body.style.overflow = '';
+        });
+
+        // Close lightbox when clicking outside the image
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                lightbox.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Initial load with some default images
+        window.addEventListener('DOMContentLoaded', () => {
+            currentSearchTerm = 'nature';
+            currentMediaType = 'images';
+            fetchMedia();
+        });
+    </script>
+</body>
+</html>
